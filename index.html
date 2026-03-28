@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文件拆分合并工具 (PKG)</title>
+  <style>
+    :root {
+      --bg-a: #fbf7ef;
+      --bg-b: #e8f3f1;
+      --ink: #1f2a31;
+      --muted: #5c6b73;
+      --card: #ffffff;
+      --line: #d8e3e0;
+      --accent: #0f766e;
+      --accent-2: #0ea5a0;
+      --warn: #b45309;
+      --ok: #166534;
+      --bad: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(15, 118, 110, 0.13), transparent 42%),
+        radial-gradient(circle at 90% 10%, rgba(14, 165, 160, 0.11), transparent 35%),
+        linear-gradient(130deg, var(--bg-a), var(--bg-b));
+      min-height: 100vh;
+      padding: 28px;
+    }
+
+    .shell {
+      max-width: 1040px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #fff, #f4fffd);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      position: relative;
+    }
+
+    .lang-toggle {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: auto;
+      padding: 8px 12px;
+      font-size: 0.86rem;
+      background: #ffffff;
+      color: var(--ink);
+      border-color: #c7d7d3;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.25rem, 1rem + 1.2vw, 2rem);
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 1.06rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .field label {
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    .row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 130px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid #c7d7d3;
+      padding: 10px 12px;
+      width: 100%;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-weight: 600;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button.secondary {
+      background: #fff;
+      color: var(--ink);
+      border-color: #c7d7d3;
+    }
+
+    .stack { display: grid; gap: 10px; }
+
+    .checks {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .checks label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 10px;
+    }
+
+    .log {
+      margin-top: 10px;
+      border: 1px dashed #bfd2cd;
+      border-radius: 10px;
+      background: #f8fbfb;
+      padding: 12px;
+      min-height: 84px;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      font-size: 0.92rem;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    .downloads {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+      max-height: 210px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .dl-item {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid #d8e3e0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .foot {
+      color: var(--muted);
+      font-size: 0.86rem;
+      padding: 2px 2px 10px;
+    }
+
+    @media (max-width: 900px) {
+      body { padding: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+      .lang-toggle {
+        position: static;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <button id="langBtn" class="lang-toggle secondary">English</button>
+      <h1 data-i18n="heroTitle">PKG 文件拆分/合并工具</h1>
+      <p data-i18n="heroDesc">
+        纯浏览器本地运行：可拆分为 .pkg 分片，自动生成一键完整性检测与合并页面，支持批量或单个下载。
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2 data-i18n="splitTitle">1) 拆分文件</h2>
+
+        <div class="field">
+          <label for="sourceFile" data-i18n="sourceFile">源文件</label>
+          <input id="sourceFile" type="file">
+        </div>
+
+        <div class="field">
+          <label data-i18n="splitSize">拆分大小</label>
+          <div class="row">
+            <input id="chunkSize" type="number" min="1" step="1" value="10">
+            <select id="chunkUnit">
+              <option value="KB">KB</option>
+              <option value="MB" selected>MB</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="outputName" data-i18n="outputName">合并输出文件名</label>
+          <input id="outputName" type="text" data-i18n-placeholder="outputNamePlaceholder" placeholder="留空则使用原文件名">
+        </div>
+
+        <div class="field">
+          <label for="prefixName" data-i18n="prefixName">分片文件名前缀</label>
+          <input id="prefixName" type="text" data-i18n-placeholder="prefixNamePlaceholder" placeholder="留空则使用源文件名">
+        </div>
+
+        <div class="checks">
+          <label><input id="randomPrefix" type="checkbox"> <span data-i18n="randomPrefix">使用随机分片前缀</span></label>
+          <label><input id="randomEach" type="checkbox"> <span data-i18n="randomEach">每个分片都使用随机文件名</span></label>
+        </div>
+
+        <div class="field">
+          <label for="downloadMode" data-i18n="downloadMode">下载模式</label>
+          <select id="downloadMode">
+            <option value="bundle" selected data-i18n="bundleOption">批量下载（单个 ZIP）</option>
+            <option value="single" data-i18n="singleOption">单个下载列表（手动逐个）</option>
+          </select>
+          <div class="subtle" data-i18n="downloadHint">批量模式可避免重复的下载弹窗干扰。</div>
+        </div>
+
+        <div class="actions">
+          <button id="splitBtn" data-i18n="splitBtn">开始拆分并生成</button>
+          <button id="resetBtn" class="secondary" data-i18n="resetBtn">重置</button>
+        </div>
+
+        <div id="splitStatus" class="status"></div>
+        <div id="splitLog" class="log" data-i18n="waitingInput">等待输入。</div>
+        <div id="downloadList" class="downloads"></div>
+      </article>
+
+      <article class="card">
+        <h2 data-i18n="aboutMergerTitle">2) 关于生成的合并器</h2>
+        <div class="stack">
+          <p class="subtle" data-i18n="aboutMergerDesc1">
+            拆分完成后会自动生成独立 HTML 合并器。
+            打开后点击一次“检测完整性”，即可检查：
+          </p>
+          <ul>
+            <li data-i18n="aboutMergerLi1">所有分片是否齐全</li>
+            <li data-i18n="aboutMergerLi2">缺失了哪些文件</li>
+            <li data-i18n="aboutMergerLi3">哈希校验是否一致</li>
+          </ul>
+          <p class="subtle" data-i18n="aboutMergerDesc2">
+            检测通过后点击“合并并下载”，即可恢复原文件（或你设置的新文件名）。
+          </p>
+        </div>
+      </article>
+    </section>
+
+    <div class="foot" data-i18n="footNote">
+      说明：批量 ZIP 导出使用 CDN 的 JSZip；若不可用会自动切换为单个下载列表模式。
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script>
+    const sourceFileEl = document.getElementById("sourceFile");
+    const chunkSizeEl = document.getElementById("chunkSize");
+    const chunkUnitEl = document.getElementById("chunkUnit");
+    const outputNameEl = document.getElementById("outputName");
+    const prefixNameEl = document.getElementById("prefixName");
+    const randomPrefixEl = document.getElementById("randomPrefix");
+    const randomEachEl = document.getElementById("randomEach");
+    const downloadModeEl = document.getElementById("downloadMode");
+    const splitBtnEl = document.getElementById("splitBtn");
+    const resetBtnEl = document.getElementById("resetBtn");
+    const langBtnEl = document.getElementById("langBtn");
+
+    const splitStatusEl = document.getElementById("splitStatus");
+    const splitLogEl = document.getElementById("splitLog");
+    const downloadListEl = document.getElementById("downloadList");
+
+    let generatedFiles = [];
+    let currentLang = "zh";
+
+    const i18n = {
+      zh: {
+        pageTitle: "文件拆分合并工具 (PKG)",
+        langBtn: "English",
+        heroTitle: "PKG 文件拆分/合并工具",
+        heroDesc: "纯浏览器本地运行：可拆分为 .pkg 分片，自动生成一键完整性检测与合并页面，支持批量或单个下载。",
+        splitTitle: "1) 拆分文件",
+        sourceFile: "源文件",
+        splitSize: "拆分大小",
+        outputName: "合并输出文件名",
+        outputNamePlaceholder: "留空则使用原文件名",
+        prefixName: "分片文件名前缀",
+        prefixNamePlaceholder: "留空则使用源文件名",
+        randomPrefix: "使用随机分片前缀",
+        randomEach: "每个分片都使用随机文件名",
+        downloadMode: "下载模式",
+        bundleOption: "批量下载（单个 ZIP）",
+        singleOption: "单个下载列表（手动逐个）",
+        downloadHint: "批量模式可避免重复的下载弹窗干扰。",
+        splitBtn: "开始拆分并生成",
+        resetBtn: "重置",
+        waitingInput: "等待输入。",
+        aboutMergerTitle: "2) 关于生成的合并器",
+        aboutMergerDesc1: "拆分完成后会自动生成独立 HTML 合并器。打开后点击一次“检测完整性”，即可检查：",
+        aboutMergerLi1: "所有分片是否齐全",
+        aboutMergerLi2: "缺失了哪些文件",
+        aboutMergerLi3: "哈希校验是否一致",
+        aboutMergerDesc2: "检测通过后点击“合并并下载”，即可恢复原文件（或你设置的新文件名）。",
+        footNote: "说明：批量 ZIP 导出使用 CDN 的 JSZip；若不可用会自动切换为单个下载列表模式。",
+        statusProcessing: "处理中...",
+        statusSelectFile: "请选择源文件。",
+        logNoSource: "未选择源文件。",
+        statusInvalidSize: "拆分大小无效。",
+        logSizePositive: "拆分大小必须是正数。",
+        downloadListHeader: "已生成文件：{count} 个。可逐个下载，避免弹窗打扰。",
+        btnDownload: "下载",
+        zipUnavailable: "当前浏览器会话中 JSZip 不可用。",
+        statusDoneBundle: "完成，已下载批量 ZIP。",
+        logDownloadModeBundle: "下载模式：批量 ZIP",
+        logGeneratedInsideZip: "已生成文件：{count} 个（包含在一个 ZIP 内）",
+        statusBundleFallback: "批量 ZIP 不可用，已切换到单个下载列表。",
+        logZipFailed: "ZIP 失败：{error}",
+        logFallbackSingle: "回退模式：单个下载列表",
+        statusDoneSingle: "完成，请使用下方列表逐个下载。",
+        logDownloadModeSingle: "下载模式：单个下载列表",
+        logGeneratedCount: "已生成文件：{count} 个",
+        logSource: "源文件：{name}",
+        logSourceSize: "源文件大小：{size}",
+        logChunkSize: "分片大小：{value} {unit}（{bytes} 字节）",
+        logTotalChunks: "分片总数：{count}",
+        logOutputName: "合并输出文件名：{name}",
+        logChunkNamingMode: "分片命名模式：{mode}",
+        namingRandomEach: "每片随机",
+        namingOrderedPrefix: "顺序前缀",
+        statusSplitFailed: "拆分失败。"
+      },
+      en: {
+        pageTitle: "SplitMerge Tool (PKG)",
+        langBtn: "中文",
+        heroTitle: "PKG Split / Merge Tool",
+        heroDesc: "Browser-only utility to split files into .pkg chunks, generate a one-click integrity checker and merger, and download outputs in bundle or single mode.",
+        splitTitle: "1) Split File",
+        sourceFile: "Source file",
+        splitSize: "Split size",
+        outputName: "Merged output filename",
+        outputNamePlaceholder: "Leave empty to use original name",
+        prefixName: "Chunk filename prefix",
+        prefixNamePlaceholder: "Leave empty to use source name",
+        randomPrefix: "Use random chunk prefix",
+        randomEach: "Use random filename for each chunk",
+        downloadMode: "Download mode",
+        bundleOption: "Batch download (single ZIP)",
+        singleOption: "Single download list (manual one-by-one)",
+        downloadHint: "Batch mode avoids repeated popup download prompts.",
+        splitBtn: "Split & Generate",
+        resetBtn: "Reset",
+        waitingInput: "Waiting for input.",
+        aboutMergerTitle: "2) About Generated Merger",
+        aboutMergerDesc1: "After splitting, a standalone HTML merger is generated. Open it and click \"Detect completeness\" once to check:",
+        aboutMergerLi1: "whether all chunks exist",
+        aboutMergerLi2: "which files are missing",
+        aboutMergerLi3: "whether hashes match",
+        aboutMergerDesc2: "Then click \"Merge & Download\" to rebuild the original file (or renamed target).",
+        footNote: "Note: ZIP batch export uses JSZip from CDN. If unavailable, it falls back to single download list mode.",
+        statusProcessing: "Processing...",
+        statusSelectFile: "Please select a source file.",
+        logNoSource: "No source file selected.",
+        statusInvalidSize: "Invalid split size.",
+        logSizePositive: "Split size must be a positive number.",
+        downloadListHeader: "Generated files: {count}. Download one-by-one to avoid popup spam.",
+        btnDownload: "Download",
+        zipUnavailable: "JSZip unavailable in this browser session.",
+        statusDoneBundle: "Done. Batch bundle downloaded.",
+        logDownloadModeBundle: "Download mode: batch ZIP",
+        logGeneratedInsideZip: "Generated files: {count} (inside one ZIP)",
+        statusBundleFallback: "Batch ZIP unavailable. Switched to single list.",
+        logZipFailed: "ZIP failed: {error}",
+        logFallbackSingle: "Fallback mode: single download list",
+        statusDoneSingle: "Done. Use the list below for single downloads.",
+        logDownloadModeSingle: "Download mode: single list",
+        logGeneratedCount: "Generated files: {count}",
+        logSource: "Source: {name}",
+        logSourceSize: "Source size: {size}",
+        logChunkSize: "Chunk size: {value} {unit} ({bytes} bytes)",
+        logTotalChunks: "Total chunks: {count}",
+        logOutputName: "Output merged filename: {name}",
+        logChunkNamingMode: "Chunk naming mode: {mode}",
+        namingRandomEach: "random each",
+        namingOrderedPrefix: "ordered prefix",
+        statusSplitFailed: "Split failed."
+      }
+    };
+
+    function t(key, vars) {
+      const dict = i18n[currentLang] || i18n.zh;
+      let text = dict[key] != null ? dict[key] : key;
+      if (vars) {
+        Object.keys(vars).forEach((k) => {
+          text = text.replace(new RegExp("\\\\{" + k + "\\\\}", "g"), String(vars[k]));
+        });
+      }
+      return text;
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = currentLang === "zh" ? "zh-CN" : "en";
+      document.title = t("pageTitle");
+      langBtnEl.textContent = t("langBtn");
+
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        el.textContent = t(key);
+      });
+
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-placeholder");
+        el.setAttribute("placeholder", t(key));
+      });
+    }
+
+    function setStatus(text, kind) {
+      splitStatusEl.className = "status " + (kind || "");
+      splitStatusEl.textContent = text;
+    }
+
+    function setLog(text) {
+      splitLogEl.textContent = text;
+    }
+
+    function clearDownloads() {
+      downloadListEl.innerHTML = "";
+      generatedFiles = [];
+    }
+
+    function safeBaseName(name) {
+      return String(name || "file")
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[^a-zA-Z0-9._-]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        || "file";
+    }
+
+    function randomId(len = 10) {
+      const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+      let out = "";
+      const bytes = new Uint8Array(len);
+      crypto.getRandomValues(bytes);
+      for (let i = 0; i < len; i++) {
+        out += chars[bytes[i] % chars.length];
+      }
+      return out;
+    }
+
+    function bytesFromUnit(value, unit) {
+      if (unit === "KB") return value * 1024;
+      if (unit === "MB") return value * 1024 * 1024;
+      return value;
+    }
+
+    function prettyBytes(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      const kb = bytes / 1024;
+      if (kb < 1024) return kb.toFixed(2) + " KB";
+      const mb = kb / 1024;
+      if (mb < 1024) return mb.toFixed(2) + " MB";
+      return (mb / 1024).toFixed(2) + " GB";
+    }
+
+    async function sha256Hex(buffer) {
+      const digest = await crypto.subtle.digest("SHA-256", buffer);
+      const arr = Array.from(new Uint8Array(digest));
+      return arr.map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function downloadBlob(blob, name) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, 1200);
+    }
+
+    function renderDownloadList(files) {
+      clearDownloads();
+      generatedFiles = files;
+
+      const header = document.createElement("div");
+      header.className = "subtle";
+      header.textContent = t("downloadListHeader", { count: files.length });
+      downloadListEl.appendChild(header);
+
+      files.forEach((entry) => {
+        const item = document.createElement("div");
+        item.className = "dl-item";
+
+        const text = document.createElement("div");
+        text.innerHTML = "<strong>" + entry.name + "</strong><br><span class='subtle'>" + prettyBytes(entry.blob.size) + "</span>";
+
+        const btn = document.createElement("button");
+        btn.className = "secondary";
+        btn.textContent = t("btnDownload");
+        btn.addEventListener("click", () => downloadBlob(entry.blob, entry.name));
+
+        item.appendChild(text);
+        item.appendChild(btn);
+        downloadListEl.appendChild(item);
+      });
+    }
+
+    async function createBundleZip(files, baseName) {
+      if (typeof JSZip === "undefined") {
+        throw new Error(t("zipUnavailable"));
+      }
+      const zip = new JSZip();
+      files.forEach((entry) => {
+        zip.file(entry.name, entry.blob);
+      });
+      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      downloadBlob(blob, baseName + "_split_bundle.zip");
+    }
+
+    function buildMergerHtml(manifest) {
+      const manifestJson = JSON.stringify(manifest).replace(/</g, "\\u003c");
+
+      return "<!doctype html>\n"
+        + "<html lang=\"zh-CN\">\n"
+        + "<head>\n"
+        + "  <meta charset=\"UTF-8\">\n"
+        + "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+        + "  <title>PKG 合并器 - " + manifest.originalName + "</title>\n"
+        + "  <style>\n"
+        + "    body{font-family:Segoe UI,Noto Sans,sans-serif;background:linear-gradient(140deg,#f8fafc,#ecfeff);margin:0;padding:20px;color:#0f172a;}\n"
+        + "    .wrap{max-width:900px;margin:0 auto;background:#fff;border:1px solid #dbe4e8;border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.05);}\n"
+        + "    h1{margin:0 0 6px;font-size:1.35rem;}\n"
+        + "    .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}\n"
+        + "    .lang{width:auto;padding:8px 12px;background:#fff;color:#0f172a;border-color:#c7d2d8;}\n"
+        + "    .muted{color:#4b5563;font-size:.92rem;}\n"
+        + "    .panel{margin-top:14px;padding:12px;border:1px dashed #c4d7df;border-radius:10px;background:#f8fbfd;}\n"
+        + "    .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;}\n"
+        + "    button{font:inherit;border-radius:10px;padding:10px 12px;border:1px solid transparent;background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;font-weight:600;cursor:pointer;}\n"
+        + "    button.secondary{background:#fff;color:#0f172a;border-color:#c7d2d8;}\n"
+        + "    .status{margin-top:10px;font-weight:600;}\n"
+        + "    .ok{color:#166534;} .warn{color:#b45309;} .bad{color:#b91c1c;}\n"
+        + "    .log{margin-top:10px;white-space:pre-wrap;line-height:1.4;background:#fff;border:1px solid #d5e2e8;border-radius:8px;padding:10px;min-height:100px;}\n"
+        + "    @media (max-width:700px){.actions{grid-template-columns:1fr;}}\n"
+        + "  </style>\n"
+        + "</head>\n"
+        + "<body>\n"
+        + "  <div class=\"wrap\">\n"
+        + "    <div class=\"top\">\n"
+        + "      <h1 id=\"title\">PKG 合并器</h1>\n"
+        + "      <button id=\"langBtn\" class=\"lang\">English</button>\n"
+        + "    </div>\n"
+        + "    <div id=\"targetLine\" class=\"muted\">目标文件：<strong>" + manifest.outputName + "</strong> | 分片数：" + manifest.totalChunks + " | 原始大小：" + manifest.originalSize + " 字节</div>\n"
+        + "    <div class=\"panel\">\n"
+        + "      <label id=\"pickLabel\"><strong>选择全部 .pkg 文件</strong></label><br>\n"
+        + "      <input id=\"chunkFiles\" type=\"file\" multiple>\n"
+        + "      <div class=\"actions\">\n"
+        + "        <button id=\"detectBtn\">检测完整性</button>\n"
+        + "        <button id=\"mergeBtn\" class=\"secondary\">合并并下载</button>\n"
+        + "      </div>\n"
+        + "      <div id=\"status\" class=\"status\"></div>\n"
+        + "      <div id=\"log\" class=\"log\">等待选择分片文件。</div>\n"
+        + "    </div>\n"
+        + "  </div>\n"
+        + "  <script>\n"
+        + "    const manifest = " + manifestJson + ";\n"
+        + "    const filesEl = document.getElementById('chunkFiles');\n"
+        + "    const detectBtn = document.getElementById('detectBtn');\n"
+        + "    const mergeBtn = document.getElementById('mergeBtn');\n"
+        + "    const langBtn = document.getElementById('langBtn');\n"
+        + "    const titleEl = document.getElementById('title');\n"
+        + "    const targetLineEl = document.getElementById('targetLine');\n"
+        + "    const pickLabelEl = document.getElementById('pickLabel');\n"
+        + "    const statusEl = document.getElementById('status');\n"
+        + "    const logEl = document.getElementById('log');\n"
+        + "    let lang = 'zh';\n"
+        + "\n"
+        + "    function tx(zh, en){ return lang === 'zh' ? zh : en; }\n"
+        + "    function renderLang(){\n"
+        + "      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';\n"
+        + "      document.title = tx('PKG 合并器 - ', 'PKG Merger - ') + manifest.originalName;\n"
+        + "      titleEl.textContent = tx('PKG 合并器', 'PKG Merger');\n"
+        + "      langBtn.textContent = tx('English', '中文');\n"
+        + "      targetLineEl.innerHTML = tx('目标文件：<strong>', 'Target file: <strong>') + manifest.outputName + '</strong> | ' + tx('分片数：', 'Chunks: ') + manifest.totalChunks + ' | ' + tx('原始大小：', 'Original size: ') + manifest.originalSize + tx(' 字节', ' bytes');\n"
+        + "      pickLabelEl.innerHTML = '<strong>' + tx('选择全部 .pkg 文件', 'Select all .pkg files') + '</strong>';\n"
+        + "      detectBtn.textContent = tx('检测完整性', 'Detect completeness');\n"
+        + "      mergeBtn.textContent = tx('合并并下载', 'Merge & Download');\n"
+        + "      if (!logEl.textContent || logEl.textContent === 'Waiting for chunk files.' || logEl.textContent === '等待选择分片文件。') {\n"
+        + "        setLog(tx('等待选择分片文件。', 'Waiting for chunk files.'));\n"
+        + "      }\n"
+        + "    }\n"
+        + "\n"
+        + "    function setStatus(text, kind){statusEl.className='status '+(kind||'');statusEl.textContent=text;}\n"
+        + "    function setLog(text){logEl.textContent=text;}\n"
+        + "\n"
+        + "    async function sha256Hex(buffer){\n"
+        + "      const digest = await crypto.subtle.digest('SHA-256', buffer);\n"
+        + "      const arr = Array.from(new Uint8Array(digest));\n"
+        + "      return arr.map(b => b.toString(16).padStart(2,'0')).join('');\n"
+        + "    }\n"
+        + "\n"
+        + "    function mapSelectedFiles(){\n"
+        + "      const files = Array.from(filesEl.files || []);\n"
+        + "      const byName = new Map();\n"
+        + "      files.forEach(f => byName.set(f.name, f));\n"
+        + "      return byName;\n"
+        + "    }\n"
+        + "\n"
+        + "    async function detect(){\n"
+        + "      const byName = mapSelectedFiles();\n"
+        + "      const missing = [];\n"
+        + "      const badHash = [];\n"
+        + "      let checked = 0;\n"
+        + "\n"
+        + "      for (const chunk of manifest.chunks){\n"
+        + "        const f = byName.get(chunk.name);\n"
+        + "        if (!f){\n"
+        + "          missing.push(chunk.name);\n"
+        + "          continue;\n"
+        + "        }\n"
+        + "        const hash = await sha256Hex(await f.arrayBuffer());\n"
+        + "        checked += 1;\n"
+        + "        if (hash !== chunk.sha256){\n"
+        + "          badHash.push(chunk.name);\n"
+        + "        }\n"
+        + "      }\n"
+        + "\n"
+        + "      const extras = [];\n"
+        + "      byName.forEach((_, key) => {\n"
+        + "        if (!manifest.chunks.find(c => c.name === key)) extras.push(key);\n"
+        + "      });\n"
+        + "\n"
+        + "      let lines = [];\n"
+        + "      lines.push(tx('期望分片数：', 'Expected chunks: ') + manifest.totalChunks);\n"
+        + "      lines.push(tx('已校验哈希分片：', 'Hash checked chunks: ') + checked);\n"
+        + "      if (missing.length) lines.push(tx('缺失：', 'Missing: ') + missing.join(', '));\n"
+        + "      if (badHash.length) lines.push(tx('哈希不匹配：', 'Hash mismatch: ') + badHash.join(', '));\n"
+        + "      if (extras.length) lines.push(tx('忽略额外文件：', 'Extra files ignored: ') + extras.join(', '));\n"
+        + "      if (!missing.length && !badHash.length) lines.push(tx('所有必要分片完整。', 'All required chunks are complete.'));\n"
+        + "      setLog(lines.join('\\n'));\n"
+        + "\n"
+        + "      if (missing.length || badHash.length){\n"
+        + "        setStatus(tx('完整性检查失败，请修复缺失或损坏分片。', 'Integrity check failed. Please fix missing/corrupted chunks.'), 'bad');\n"
+        + "        return { ok: false, missing, badHash };\n"
+        + "      }\n"
+        + "\n"
+        + "      setStatus(tx('完整性检查通过。', 'Integrity check passed.'), 'ok');\n"
+        + "      return { ok: true, missing: [], badHash: [] };\n"
+        + "    }\n"
+        + "\n"
+        + "    async function merge(){\n"
+        + "      const result = await detect();\n"
+        + "      if (!result.ok) return;\n"
+        + "\n"
+        + "      const byName = mapSelectedFiles();\n"
+        + "      const ordered = [...manifest.chunks].sort((a,b) => a.index - b.index);\n"
+        + "      const buffers = [];\n"
+        + "      let total = 0;\n"
+        + "\n"
+        + "      for (const chunk of ordered){\n"
+        + "        const f = byName.get(chunk.name);\n"
+        + "        const arr = new Uint8Array(await f.arrayBuffer());\n"
+        + "        buffers.push(arr);\n"
+        + "        total += arr.byteLength;\n"
+        + "      }\n"
+        + "\n"
+        + "      const merged = new Uint8Array(total);\n"
+        + "      let offset = 0;\n"
+        + "      for (const b of buffers){\n"
+        + "        merged.set(b, offset);\n"
+        + "        offset += b.byteLength;\n"
+        + "      }\n"
+        + "\n"
+        + "      const blob = new Blob([merged], { type: manifest.originalType || 'application/octet-stream' });\n"
+        + "      const a = document.createElement('a');\n"
+        + "      a.href = URL.createObjectURL(blob);\n"
+        + "      a.download = manifest.outputName;\n"
+        + "      document.body.appendChild(a);\n"
+        + "      a.click();\n"
+        + "      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);\n"
+        + "\n"
+        + "      setStatus(tx('合并完成，已开始下载：', 'Merge finished. Download started: ') + manifest.outputName, 'ok');\n"
+        + "    }\n"
+        + "\n"
+        + "    detectBtn.addEventListener('click', () => { detect().catch(err => { setStatus(tx('检测错误', 'Detect error'), 'bad'); setLog(String(err && err.message || err)); }); });\n"
+        + "    mergeBtn.addEventListener('click', () => { merge().catch(err => { setStatus(tx('合并错误', 'Merge error'), 'bad'); setLog(String(err && err.message || err)); }); });\n"
+        + "    langBtn.addEventListener('click', () => { lang = lang === 'zh' ? 'en' : 'zh'; renderLang(); });\n"
+        + "    renderLang();\n"
+        + "  </scr" + "ipt>\n"
+        + "</body>\n"
+        + "</html>\n";
+    }
+
+    async function splitAndGenerate() {
+      clearDownloads();
+      setStatus(t("statusProcessing"), "warn");
+
+      const file = sourceFileEl.files && sourceFileEl.files[0];
+      if (!file) {
+        setStatus(t("statusSelectFile"), "bad");
+        setLog(t("logNoSource"));
+        return;
+      }
+
+      const chunkSizeValue = Number(chunkSizeEl.value);
+      if (!Number.isFinite(chunkSizeValue) || chunkSizeValue <= 0) {
+        setStatus(t("statusInvalidSize"), "bad");
+        setLog(t("logSizePositive"));
+        return;
+      }
+
+      const unit = chunkUnitEl.value;
+      const chunkSizeBytes = bytesFromUnit(chunkSizeValue, unit);
+      const totalChunks = Math.ceil(file.size / chunkSizeBytes);
+      const outputName = (outputNameEl.value || "").trim() || file.name;
+
+      const baseNameFromFile = safeBaseName(file.name);
+      const customPrefix = (prefixNameEl.value || "").trim();
+      const prefix = randomPrefixEl.checked
+        ? randomId(10)
+        : safeBaseName(customPrefix || baseNameFromFile);
+
+      const manifest = {
+        format: "splitmerge.pkg.v1",
+        createdAt: new Date().toISOString(),
+        originalName: file.name,
+        outputName,
+        originalType: file.type || "application/octet-stream",
+        originalSize: file.size,
+        chunkSizeBytes,
+        chunkSizeInput: { value: chunkSizeValue, unit },
+        totalChunks,
+        chunks: []
+      };
+
+      const generated = [];
+      const logLines = [];
+
+      logLines.push(t("logSource", { name: file.name }));
+      logLines.push(t("logSourceSize", { size: prettyBytes(file.size) }));
+      logLines.push(t("logChunkSize", { value: chunkSizeValue, unit, bytes: chunkSizeBytes }));
+      logLines.push(t("logTotalChunks", { count: totalChunks }));
+      logLines.push(t("logOutputName", { name: outputName }));
+      logLines.push(t("logChunkNamingMode", { mode: randomEachEl.checked ? t("namingRandomEach") : t("namingOrderedPrefix") }));
+
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * chunkSizeBytes;
+        const end = Math.min(start + chunkSizeBytes, file.size);
+        const blob = file.slice(start, end);
+
+        const arr = await blob.arrayBuffer();
+        const sha256 = await sha256Hex(arr);
+
+        const name = randomEachEl.checked
+          ? randomId(12) + ".pkg"
+          : prefix + ".part" + String(i + 1).padStart(4, "0") + ".pkg";
+
+        manifest.chunks.push({
+          index: i,
+          name,
+          size: blob.size,
+          sha256
+        });
+
+        generated.push({ name, blob });
+      }
+
+      const manifestName = prefix + ".manifest.pkg.json";
+      const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+      generated.push({ name: manifestName, blob: manifestBlob });
+
+      const mergerHtml = buildMergerHtml(manifest);
+      const mergerName = prefix + ".merge.html";
+      const mergerBlob = new Blob([mergerHtml], { type: "text/html;charset=utf-8" });
+      generated.push({ name: mergerName, blob: mergerBlob });
+
+      const mode = downloadModeEl.value;
+      if (mode === "bundle") {
+        try {
+          await createBundleZip(generated, prefix);
+          setStatus(t("statusDoneBundle"), "ok");
+          logLines.push(t("logDownloadModeBundle"));
+          logLines.push(t("logGeneratedInsideZip", { count: generated.length }));
+        } catch (err) {
+          setStatus(t("statusBundleFallback"), "warn");
+          renderDownloadList(generated);
+          logLines.push(t("logZipFailed", { error: String(err && err.message || err) }));
+          logLines.push(t("logFallbackSingle"));
+        }
+      } else {
+        renderDownloadList(generated);
+        setStatus(t("statusDoneSingle"), "ok");
+        logLines.push(t("logDownloadModeSingle"));
+        logLines.push(t("logGeneratedCount", { count: generated.length }));
+      }
+
+      setLog(logLines.join("\n"));
+    }
+
+    splitBtnEl.addEventListener("click", () => {
+      splitAndGenerate().catch((err) => {
+        setStatus(t("statusSplitFailed"), "bad");
+        setLog(String(err && err.message || err));
+      });
+    });
+
+    resetBtnEl.addEventListener("click", () => {
+      sourceFileEl.value = "";
+      chunkSizeEl.value = "10";
+      chunkUnitEl.value = "MB";
+      outputNameEl.value = "";
+      prefixNameEl.value = "";
+      randomPrefixEl.checked = false;
+      randomEachEl.checked = false;
+      downloadModeEl.value = "bundle";
+      clearDownloads();
+      setStatus("", "");
+      setLog(t("waitingInput"));
+    });
+
+    langBtnEl.addEventListener("click", () => {
+      currentLang = currentLang === "zh" ? "en" : "zh";
+      applyLanguage();
+    });
+
+    applyLanguage();
+  </script>
+</body>
+</html>

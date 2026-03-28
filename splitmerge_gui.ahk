@@ -285,6 +285,7 @@ GetFileSHA256(path) {
 
 GenerateMergerScript(saveDir, originalName, namesArrayStr, hashArrayStr, sizeArrayStr, sourceHash, sourceSize) {
     mergerScriptContent :=
+    "
     (
     #Requires AutoHotkey v2.0
     #SingleInstance Force
@@ -425,7 +426,7 @@ GenerateMergerScript(saveDir, originalName, namesArrayStr, hashArrayStr, sizeArr
         }
         return ""
     }
-    )
+    )"
 
     finalScript := Format(
         mergerScriptContent,

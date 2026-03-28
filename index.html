@@ -275,10 +275,10 @@
         <div class="field">
           <label for="downloadMode" data-i18n="downloadMode">下载模式</label>
           <select id="downloadMode">
-            <option value="bundle" selected data-i18n="bundleOption">批量下载（单个 ZIP）</option>
+            <option value="bundle" selected data-i18n="bundleOption">批量普通下载（自动逐个）</option>
             <option value="single" data-i18n="singleOption">单个下载列表（手动逐个）</option>
           </select>
-          <div class="subtle" data-i18n="downloadHint">批量模式可避免重复的下载弹窗干扰。</div>
+          <div class="subtle" data-i18n="downloadHint">批量模式会连续触发多个文件下载；首次使用时浏览器可能询问是否允许该站点下载多个文件。</div>
         </div>
 
         <div class="actions">
@@ -311,11 +311,9 @@
     </section>
 
     <div class="foot" data-i18n="footNote">
-      说明：批量 ZIP 导出使用 CDN 的 JSZip；若不可用会自动切换为单个下载列表模式。
+      说明：批量下载为浏览器原生多文件下载，首次可能提示“是否允许此站点下载多个文件”。
     </div>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script>
     const sourceFileEl = document.getElementById("sourceFile");
     const chunkSizeEl = document.getElementById("chunkSize");
@@ -353,9 +351,9 @@
         randomEach: "每个分片都使用随机文件名",
         chunkNameModeHint: "命名说明：开启“随机分片前缀”会将前缀改为随机字符串（影响清单/合并器文件名）；开启“每个分片都使用随机文件名”后，每个 .pkg 都独立随机命名（不再使用顺序前缀.part0001 形式）。",
         downloadMode: "下载模式",
-        bundleOption: "批量下载（单个 ZIP）",
+        bundleOption: "批量普通下载（自动逐个）",
         singleOption: "单个下载列表（手动逐个）",
-        downloadHint: "批量模式可避免重复的下载弹窗干扰。",
+        downloadHint: "批量模式会连续触发多个文件下载；首次使用时浏览器可能询问是否允许该站点下载多个文件。",
         splitBtn: "开始拆分并生成",
         resetBtn: "重置",
         waitingInput: "等待输入。",
@@ -365,21 +363,21 @@
         aboutMergerLi2: "缺失了哪些文件",
         aboutMergerLi3: "哈希校验是否一致",
         aboutMergerDesc2: "检测通过后点击“合并并下载”，即可恢复原文件（或你设置的新文件名）。",
-        footNote: "说明：批量 ZIP 导出使用 CDN 的 JSZip；若不可用会自动切换为单个下载列表模式。",
+        footNote: "说明：批量下载为浏览器原生多文件下载，首次可能提示“是否允许此站点下载多个文件”。",
         statusProcessing: "处理中...",
         statusSelectFile: "请选择源文件。",
         logNoSource: "未选择源文件。",
         statusInvalidSize: "拆分大小无效。",
         logSizePositive: "拆分大小必须是正数。",
-        downloadListHeader: "已生成文件：{count} 个。可逐个下载，避免弹窗打扰。",
+        downloadListHeader: "已生成文件：{count} 个。可逐个手动下载。",
         btnDownload: "下载",
-        zipUnavailable: "当前浏览器会话中 JSZip 不可用。",
-        statusDoneBundle: "完成，已下载批量 ZIP。",
-        logDownloadModeBundle: "下载模式：批量 ZIP",
-        logGeneratedInsideZip: "已生成文件：{count} 个（包含在一个 ZIP 内）",
-        statusBundleFallback: "批量 ZIP 不可用，已切换到单个下载列表。",
-        logZipFailed: "ZIP 失败：{error}",
-        logFallbackSingle: "回退模式：单个下载列表",
+        statusDoneBundle: "完成，已开始批量普通下载。",
+        logDownloadModeBundle: "下载模式：批量普通下载（自动逐个）",
+        logGeneratedInsideZip: "已触发下载文件：{count} 个",
+        statusBundleFallback: "批量下载可能被浏览器拦截，请允许“多个下载”权限后重试。",
+        logZipFailed: "批量下载触发失败：{error}",
+        logFallbackSingle: "已显示单个下载列表，可手动逐个下载",
+        multiDownloadPermissionHint: "提示：若浏览器出现“是否允许此站点下载多个文件”，请选择允许。",
         statusDoneSingle: "完成，请使用下方列表逐个下载。",
         logDownloadModeSingle: "下载模式：单个下载列表",
         logGeneratedCount: "已生成文件：{count} 个",
@@ -409,9 +407,9 @@
         randomEach: "Use random filename for each chunk",
         chunkNameModeHint: "Naming note: enabling \"random chunk prefix\" replaces the prefix with a random string (also affects manifest/merger filenames); enabling \"random filename for each chunk\" gives every .pkg an independent random name instead of prefix.part0001 style.",
         downloadMode: "Download mode",
-        bundleOption: "Batch download (single ZIP)",
+        bundleOption: "Batch normal download (auto one-by-one)",
         singleOption: "Single download list (manual one-by-one)",
-        downloadHint: "Batch mode avoids repeated popup download prompts.",
+        downloadHint: "Batch mode triggers multiple regular downloads; on first use, the browser may ask whether to allow this site to download multiple files.",
         splitBtn: "Split & Generate",
         resetBtn: "Reset",
         waitingInput: "Waiting for input.",
@@ -421,21 +419,21 @@
         aboutMergerLi2: "which files are missing",
         aboutMergerLi3: "whether hashes match",
         aboutMergerDesc2: "Then click \"Merge & Download\" to rebuild the original file (or renamed target).",
-        footNote: "Note: ZIP batch export uses JSZip from CDN. If unavailable, it falls back to single download list mode.",
+        footNote: "Note: Batch mode uses native browser multi-file downloads and may prompt for permission to allow multiple downloads on first use.",
         statusProcessing: "Processing...",
         statusSelectFile: "Please select a source file.",
         logNoSource: "No source file selected.",
         statusInvalidSize: "Invalid split size.",
         logSizePositive: "Split size must be a positive number.",
-        downloadListHeader: "Generated files: {count}. Download one-by-one to avoid popup spam.",
+        downloadListHeader: "Generated files: {count}. You can download them manually one-by-one.",
         btnDownload: "Download",
-        zipUnavailable: "JSZip unavailable in this browser session.",
-        statusDoneBundle: "Done. Batch bundle downloaded.",
-        logDownloadModeBundle: "Download mode: batch ZIP",
-        logGeneratedInsideZip: "Generated files: {count} (inside one ZIP)",
-        statusBundleFallback: "Batch ZIP unavailable. Switched to single list.",
-        logZipFailed: "ZIP failed: {error}",
-        logFallbackSingle: "Fallback mode: single download list",
+        statusDoneBundle: "Done. Batch normal downloads started.",
+        logDownloadModeBundle: "Download mode: batch normal (auto one-by-one)",
+        logGeneratedInsideZip: "Download triggers sent: {count}",
+        statusBundleFallback: "Batch downloads may be blocked by the browser. Allow multiple-download permission and retry.",
+        logZipFailed: "Batch download trigger failed: {error}",
+        logFallbackSingle: "Single download list is shown; download manually if needed",
+        multiDownloadPermissionHint: "Tip: if prompted to allow this site to download multiple files, choose Allow.",
         statusDoneSingle: "Done. Use the list below for single downloads.",
         logDownloadModeSingle: "Download mode: single list",
         logGeneratedCount: "Generated files: {count}",
@@ -544,6 +542,10 @@
       }, 1200);
     }
 
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
     function renderDownloadList(files) {
       clearDownloads();
       generatedFiles = files;
@@ -571,16 +573,12 @@
       });
     }
 
-    async function createBundleZip(files, baseName) {
-      if (typeof JSZip === "undefined") {
-        throw new Error(t("zipUnavailable"));
+    async function triggerBatchDownloads(files) {
+      // Add a short delay between downloads so browsers can process download events.
+      for (const entry of files) {
+        downloadBlob(entry.blob, entry.name);
+        await sleep(150);
       }
-      const zip = new JSZip();
-      files.forEach((entry) => {
-        zip.file(entry.name, entry.blob);
-      });
-      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
-      downloadBlob(blob, baseName + "_split_bundle.zip");
     }
 
     function buildMergerHtml(manifest) {
@@ -842,10 +840,11 @@
       const mode = downloadModeEl.value;
       if (mode === "bundle") {
         try {
-          await createBundleZip(generated, prefix);
+          await triggerBatchDownloads(generated);
           setStatus(t("statusDoneBundle"), "ok");
           logLines.push(t("logDownloadModeBundle"));
           logLines.push(t("logGeneratedInsideZip", { count: generated.length }));
+          logLines.push(t("multiDownloadPermissionHint"));
         } catch (err) {
           setStatus(t("statusBundleFallback"), "warn");
           renderDownloadList(generated);

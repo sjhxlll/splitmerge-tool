@@ -38,10 +38,12 @@ If you do not want to rely on a browser, use the desktop app:
 
 Desktop capabilities:
 
+- Chinese UI by default with one-click English toggle
 - Split tab:
   - Splits into `.pkg` chunks
   - Automatically creates an output folder in source file directory: `<prefix>_output_<timestamp>`
   - Writes `*.manifest.pkg.json`
+  - Can automatically copy the main app (`exe` or `py`) into the output folder for portable use
 - Merge tab:
   - Loads manifest
   - Verifies missing chunks and hashes

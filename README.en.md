@@ -45,6 +45,17 @@ After splitting, the tool generates:
 - `*.manifest.pkg.json`: chunk manifest and hashes
 - `*.merge.html`: standalone merger page
 
+## Chunk Naming Options
+
+- Use random chunk prefix:
+  - Replaces the chunk prefix with a random string (for example, `a8k2m1x9qz`).
+  - In ordered naming mode, chunks become names like `a8k2m1x9qz.part0001.pkg`.
+  - Also affects generated file names such as `a8k2m1x9qz.manifest.pkg.json` and `a8k2m1x9qz.merge.html`.
+- Use random filename for each chunk:
+  - Each `.pkg` chunk gets its own independent random name (for example, `k3f8p2m1t0ab.pkg`, `q1z7c9n4r2de.pkg`).
+  - No longer uses continuous `prefix.part0001.pkg` style naming.
+  - Manual sorting is not needed during merge. The generated manifest stores mapping info, and the merger validates and reorders chunks automatically.
+
 ## Merge Workflow
 
 1. Open the generated `*.merge.html`.

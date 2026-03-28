@@ -268,6 +268,9 @@
           <label><input id="randomPrefix" type="checkbox"> <span data-i18n="randomPrefix">使用随机分片前缀</span></label>
           <label><input id="randomEach" type="checkbox"> <span data-i18n="randomEach">每个分片都使用随机文件名</span></label>
         </div>
+        <div class="subtle" data-i18n="chunkNameModeHint">
+          命名说明：开启“随机分片前缀”会将前缀改为随机字符串（影响清单/合并器文件名）；开启“每个分片都使用随机文件名”后，每个 .pkg 都独立随机命名（不再使用顺序前缀.part0001 形式）。
+        </div>
 
         <div class="field">
           <label for="downloadMode" data-i18n="downloadMode">下载模式</label>
@@ -348,6 +351,7 @@
         prefixNamePlaceholder: "留空则使用源文件名",
         randomPrefix: "使用随机分片前缀",
         randomEach: "每个分片都使用随机文件名",
+        chunkNameModeHint: "命名说明：开启“随机分片前缀”会将前缀改为随机字符串（影响清单/合并器文件名）；开启“每个分片都使用随机文件名”后，每个 .pkg 都独立随机命名（不再使用顺序前缀.part0001 形式）。",
         downloadMode: "下载模式",
         bundleOption: "批量下载（单个 ZIP）",
         singleOption: "单个下载列表（手动逐个）",
@@ -403,6 +407,7 @@
         prefixNamePlaceholder: "Leave empty to use source name",
         randomPrefix: "Use random chunk prefix",
         randomEach: "Use random filename for each chunk",
+        chunkNameModeHint: "Naming note: enabling \"random chunk prefix\" replaces the prefix with a random string (also affects manifest/merger filenames); enabling \"random filename for each chunk\" gives every .pkg an independent random name instead of prefix.part0001 style.",
         downloadMode: "Download mode",
         bundleOption: "Batch download (single ZIP)",
         singleOption: "Single download list (manual one-by-one)",

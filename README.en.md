@@ -25,6 +25,27 @@ A browser-based file split/merge tool that splits large files into `.pkg` chunks
 ## Project Structure
 
 - `index.html`: Main tool page (split + merger generator)
+- `splitmerge_desktop.py`: Desktop app (no browser dependency)
+- `build_exe.bat`: One-click Windows build script (creates exe)
+
+## Desktop (EXE) Usage
+
+If you do not want to rely on a browser, use the desktop app:
+
+1. Install Python 3.10+ (and add it to PATH).
+2. Run: `build_exe.bat`
+3. After build, launch `dist/splitmerge-desktop.exe`.
+
+Desktop capabilities:
+
+- Split tab:
+  - Splits into `.pkg` chunks
+  - Automatically creates an output folder in source file directory: `<prefix>_output_<timestamp>`
+  - Writes `*.manifest.pkg.json`
+- Merge tab:
+  - Loads manifest
+  - Verifies missing chunks and hashes
+  - Merges into original output filename (or custom name)
 
 ## Quick Start
 

@@ -25,6 +25,27 @@
 ## 项目结构
 
 - `index.html`: 主工具页面（拆分 + 生成合并器）
+- `splitmerge_desktop.py`: 桌面版工具（不依赖浏览器）
+- `build_exe.bat`: Windows 一键打包脚本（生成 exe）
+
+## 桌面版（EXE）使用
+
+如果你不想依赖浏览器，可以使用桌面版：
+
+1. 安装 Python 3.10+（并勾选加入 PATH）。
+2. 在项目目录运行：`build_exe.bat`
+3. 打包完成后，在 `dist/splitmerge-desktop.exe` 启动程序。
+
+桌面版能力：
+
+- 拆分页签：
+  - 拆分输出为 `.pkg`
+  - 自动在源文件同目录生成输出文件夹：`<前缀>_output_时间戳`
+  - 输出 `*.manifest.pkg.json`
+- 合并页签：
+  - 读取 `manifest`
+  - 校验缺失分片与哈希
+  - 通过后合并为原文件（或指定输出名）
 
 ## 快速开始
 
